@@ -10,14 +10,35 @@ namespace {
     QList<QRect> buttons;
     QList<QRect> checks;
     QList<QRect> sliders;
-    QMap<QString,bool> results;
-    QMap<QString,bool> next_results;
-    QMap<QString,float> fresults;
-    QMap<QString, float> next_fresults;
+    QMap<QString,QVariant> results;
+    QMap<QString,QVariant> prev_results;
+    QMap<QString,QVariant> defaults;
+    QMap<QString,QVariant> prev_defaults;
 
     QString rectToString(const QRect& r)
     {
         return QString("%1,%2,%3,%4").arg(r.left()).arg(r.right()).arg(r.top()).arg(r.bottom());
+    }
+
+    QVariant handleValues(const QString& key, QVariant def)
+    {
+        QVariant result = def;
+        if(results.count(key)) {
+            result = results[key];
+        }
+        if(def != result) {
+            QVariant prev_default = prev_defaults[key];
+            QVariant prev_result = prev_results[key];
+            if(def == prev_result && result == prev_default)
+                defaults[key] = result;
+            else if(prev_default == def) // same value as before, so we assume this is just frame-lag
+                defaults[key] = def;
+            else
+                defaults[key] = result;
+        } else {
+            defaults[key] = result;
+        }
+        return result;
     }
 }
 
@@ -53,7 +74,7 @@ void MyGLWidget::paintGL()
     };
     Q_FOREACH(const QRect& rect, checks)
     {
-        if(next_results[rectToString(rect)])
+        if(defaults[rectToString(rect)].toBool())
             glColor3f(0.f, 1.f, 0.f);
         else
             glColor3f(0.f, 0.f, 1.f);
@@ -79,7 +100,7 @@ void MyGLWidget::paintGL()
         glVertex2f(rect.right(), rect.bottom());
         glVertex2f(rect.right(), rect.top());
 
-        int line_pos = rect.left() + next_fresults[rectToString(rect)]*rect.width();
+        int line_pos = rect.left() + defaults[rectToString(rect)].toFloat()*rect.width();
         glVertex2f(line_pos, rect.bottom());
         glVertex2f(line_pos, rect.top());
     }
@@ -91,8 +112,8 @@ void MyGLWidget::paintGL()
 // flag for any rectangles that overlap the mouse.
 void MyGLWidget::mousePressEvent(QMouseEvent *evt)
 {
-    results = next_results;
-    fresults = next_fresults;
+    results = defaults;
+    prev_results = results;
     Q_FOREACH(const QRect& rect, buttons)
     {
         if(rect.contains(evt->pos())) {
@@ -103,14 +124,14 @@ void MyGLWidget::mousePressEvent(QMouseEvent *evt)
     {
         if(rect.contains(evt->pos())) {
             QString str = rectToString(rect);
-            results[str] = !next_results[str];
+            results[str] = !defaults[str].toBool();
         }
     }
     Q_FOREACH(const QRect& rect, sliders)
     {
         if(rect.contains(evt->pos())) {
             float result = float(evt->pos().x() - rect.left()) / float(rect.width());
-            fresults[rectToString(rect)] = result;
+            results[rectToString(rect)] = QVariant(result);
         }
     }
 }
@@ -121,8 +142,9 @@ void clearControls()
 {
     buttons.clear();
     checks.clear();
-    next_results.clear();
-    next_fresults.clear();
+    sliders.clear();
+    prev_defaults = defaults;
+    defaults.clear();
 }
 
 // This adds a new rectangle to the draw queue,
@@ -134,7 +156,7 @@ bool pushButton(const QRect& rect)
     QString rect_as_string = rectToString(rect);
     buttons.append(rect);
     if(results.count(rect_as_string)) {
-        result = results[rect_as_string];
+        result = results[rect_as_string].toBool();
         results.remove(rect_as_string);
     }
     return result;
@@ -145,14 +167,8 @@ bool pushButton(const QRect& rect)
 // 2. It does not remove itself from the results map once its result is read.
 bool checkBox(const QRect &rect, bool checked)
 {
-    QString rect_as_string = rectToString(rect);
-    bool result = checked;
     checks.append(rect);
-    if(results.count(rect_as_string)) {
-        result = results[rect_as_string];
-    }
-    next_results.insert(rect_as_string, result);
-    return result;
+    return handleValues(rectToString(rect), checked).toBool();
 }
 
 // The slider doesn't quite "slide" yet, but it changes its value
@@ -160,12 +176,6 @@ bool checkBox(const QRect &rect, bool checked)
 // Currently locked to 0..1. Scaling the range is easy.
 float slider(const QRect& rect, float value)
 {
-    QString rect_as_string = rectToString(rect);
-    float result = value;
     sliders.append(rect);
-    if(fresults.count(rect_as_string)) {
-        result = fresults[rect_as_string];
-    }
-    next_fresults.insert(rect_as_string, result);
-    return result;
+    return handleValues(rectToString(rect), value).toFloat();
 }

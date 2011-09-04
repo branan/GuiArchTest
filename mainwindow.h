@@ -18,6 +18,8 @@ public:
 private:
     Ui::MainWindow *ui;
     bool ui_state;
+    bool toggle_1, toggle_2;
+    float slider_value;
 
     void onGUI();
 

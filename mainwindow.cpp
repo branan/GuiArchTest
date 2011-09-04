@@ -6,7 +6,9 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    ui_state(false)
+    ui_state(false),
+    toggle_1(false), toggle_2(true),
+    slider_value(0.f)
 {
     ui->setupUi(this);
     QTimer* t = new QTimer(this);
@@ -42,7 +44,7 @@ void MainWindow::onGUI()
     QRect r(0, top, 100, 100);
     if(pushButton(r))
         ui_state = !ui_state;
-    checkBox(QRect(100, 0, 100, 100), true);
-    checkBox(QRect(100, 100, 100, 100), false);
-    slider(QRect(200, 0, 100, 100));
+    toggle_1 = checkBox(QRect(100, 0, 100, 100), toggle_1);
+    toggle_2 = checkBox(QRect(100, 100, 100, 100), toggle_2);
+    slider_value = slider(QRect(200, 0, 100, 100), slider_value);
 }
