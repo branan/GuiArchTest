@@ -44,7 +44,10 @@ void MainWindow::onGUI()
     QRect r(0, top, 100, 100);
     if(pushButton(r))
         ui_state = !ui_state;
-    toggle_1 = checkBox(QRect(100, 0, 100, 100), toggle_1);
-    toggle_2 = checkBox(QRect(100, 100, 100, 100), toggle_2);
-    slider_value = slider(QRect(200, 0, 100, 100), slider_value);
+    if(ui_state) {
+        toggle_1 = checkBox(QRect(100, 0, 100, 100), toggle_1);
+        toggle_2 = checkBox(QRect(100, 100, 100, 100), toggle_2);
+    } else {
+        slider_value = slider(QRect(100, 0, 100, 100), slider_value);
+    }
 }

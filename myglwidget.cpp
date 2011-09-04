@@ -74,7 +74,7 @@ void MyGLWidget::paintGL()
     };
     Q_FOREACH(const QRect& rect, checks)
     {
-        if(defaults[rectToString(rect)].toBool())
+        if(defaults["check-"+rectToString(rect)].toBool())
             glColor3f(0.f, 1.f, 0.f);
         else
             glColor3f(0.f, 0.f, 1.f);
@@ -100,7 +100,7 @@ void MyGLWidget::paintGL()
         glVertex2f(rect.right(), rect.bottom());
         glVertex2f(rect.right(), rect.top());
 
-        int line_pos = rect.left() + defaults[rectToString(rect)].toFloat()*rect.width();
+        int line_pos = rect.left() + defaults["slider-"+rectToString(rect)].toFloat()*rect.width();
         glVertex2f(line_pos, rect.bottom());
         glVertex2f(line_pos, rect.top());
     }
@@ -112,18 +112,18 @@ void MyGLWidget::paintGL()
 // flag for any rectangles that overlap the mouse.
 void MyGLWidget::mousePressEvent(QMouseEvent *evt)
 {
-    results = defaults;
     prev_results = results;
+    results = defaults;
     Q_FOREACH(const QRect& rect, buttons)
     {
         if(rect.contains(evt->pos())) {
-            results[rectToString(rect)] = true;
+            results["button-"+rectToString(rect)] = true;
         }
     }
     Q_FOREACH(const QRect& rect, checks)
     {
         if(rect.contains(evt->pos())) {
-            QString str = rectToString(rect);
+            QString str = "check-"+rectToString(rect);
             results[str] = !defaults[str].toBool();
         }
     }
@@ -131,7 +131,7 @@ void MyGLWidget::mousePressEvent(QMouseEvent *evt)
     {
         if(rect.contains(evt->pos())) {
             float result = float(evt->pos().x() - rect.left()) / float(rect.width());
-            results[rectToString(rect)] = QVariant(result);
+            results["slider-"+rectToString(rect)] = QVariant(result);
         }
     }
 }
@@ -153,7 +153,7 @@ void clearControls()
 bool pushButton(const QRect& rect)
 {
     bool result = false;
-    QString rect_as_string = rectToString(rect);
+    QString rect_as_string = "button-"+rectToString(rect);
     buttons.append(rect);
     if(results.count(rect_as_string)) {
         result = results[rect_as_string].toBool();
@@ -168,7 +168,7 @@ bool pushButton(const QRect& rect)
 bool checkBox(const QRect &rect, bool checked)
 {
     checks.append(rect);
-    return handleValues(rectToString(rect), checked).toBool();
+    return handleValues("check-"+rectToString(rect), checked).toBool();
 }
 
 // The slider doesn't quite "slide" yet, but it changes its value
@@ -177,5 +177,5 @@ bool checkBox(const QRect &rect, bool checked)
 float slider(const QRect& rect, float value)
 {
     sliders.append(rect);
-    return handleValues(rectToString(rect), value).toFloat();
+    return handleValues("slider-"+rectToString(rect), value).toFloat();
 }
