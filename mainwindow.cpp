@@ -42,4 +42,6 @@ void MainWindow::onGUI()
     QRect r(0, top, 100, 100);
     if(pushButton(r))
         ui_state = !ui_state;
+    checkBox(QRect(100, 0, 100, 100), true);
+    checkBox(QRect(100, 100, 100, 100), false);
 }

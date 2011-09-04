@@ -8,8 +8,8 @@
 
 namespace {
     QList<QRect> buttons;
+    QList<QRect> checks;
     QMap<QString,bool> results;
-    QMap<QString,bool> next_results;
 
     QString rectToString(const QRect& r)
     {
@@ -24,8 +24,7 @@ MyGLWidget::MyGLWidget(QWidget *parent) :
 
 void MyGLWidget::initializeGL()
 {
-    glClearColor(0.f, 1.f, 0.f, 1.f);
-    glColor3f(1.f, 0.f, 1.f);
+    glClearColor(0.f, 0.f, 0.f, 0.f);
 }
 
 void MyGLWidget::resizeGL(int w, int h)
@@ -40,6 +39,7 @@ void MyGLWidget::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT);
     glBegin(GL_QUADS);
+    glColor3f(1.f, 0.f, 0.f);
     Q_FOREACH(const QRect& rect, buttons)
     {
         glVertex2f(rect.left(), rect.bottom());
@@ -47,6 +47,18 @@ void MyGLWidget::paintGL()
         glVertex2f(rect.right(), rect.top());
         glVertex2f(rect.right(), rect.bottom());
     };
+    Q_FOREACH(const QRect& rect, checks)
+    {
+        if(results[rectToString(rect)])
+            glColor3f(0.f, 1.f, 0.f);
+        else
+            glColor3f(0.f, 0.f, 1.f);
+        glVertex2f(rect.left(), rect.bottom());
+        glVertex2f(rect.left(), rect.top());
+        glVertex2f(rect.right(), rect.top());
+        glVertex2f(rect.right(), rect.bottom());
+    }
+
     glEnd();
 }
 
@@ -55,12 +67,17 @@ void MyGLWidget::paintGL()
 // flag for any rectangles that overlap the mouse.
 void MyGLWidget::mousePressEvent(QMouseEvent *evt)
 {
-    results = next_results;
-    next_results.clear();
     Q_FOREACH(const QRect& rect, buttons)
     {
         if(rect.contains(evt->pos())) {
             results[rectToString(rect)] = true;
+        }
+    }
+    Q_FOREACH(const QRect& rect, checks)
+    {
+        if(rect.contains(evt->pos())) {
+            QString str = rectToString(rect);
+            results[str] = ! results[str];
         }
     }
 }
@@ -70,7 +87,7 @@ void MyGLWidget::mousePressEvent(QMouseEvent *evt)
 void clearControls()
 {
     buttons.clear();
-    next_results.clear();
+    checks.clear();
 }
 
 // This adds a new rectangle to the draw queue,
@@ -85,6 +102,17 @@ bool pushButton(const QRect& rect)
         result = results[rect_as_string];
         results.remove(rect_as_string);
     }
-    next_results[rect_as_string] = false;
     return result;
+}
+
+bool checkBox(const QRect &rect, bool checked)
+{
+    QString rect_as_string = rectToString(rect);
+    checks.append(rect);
+    if(results.count(rect_as_string)) {
+        return results[rect_as_string];
+    } else {
+        results.insert(rect_as_string, checked);
+        return checked;
+    }
 }
