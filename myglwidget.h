@@ -23,6 +23,7 @@ protected:
 // script-accessible functions for various controls.
 bool pushButton(const QRect& rect);
 bool checkBox(const QRect& rect, bool checked=true);
+float slider(const QRect& rect, float value = 0.5f);
 
 // "internal" functions - used by the GUI system, but not accseed by scripts
 void clearControls();

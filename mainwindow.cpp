@@ -44,4 +44,5 @@ void MainWindow::onGUI()
         ui_state = !ui_state;
     checkBox(QRect(100, 0, 100, 100), true);
     checkBox(QRect(100, 100, 100, 100), false);
+    slider(QRect(200, 0, 100, 100));
 }
